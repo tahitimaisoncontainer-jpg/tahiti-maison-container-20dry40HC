@@ -486,8 +486,7 @@
       <div class="devis-notice">Ce devis est établi à titre estimatif et sans engagement.<br>Tahiti Maison Container — Tél : 87 22 65 55 — tahitimaisoncontainer@gmail.com</div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-primary" id="sendBtn" onclick="sendEmail()"><span id="sendBtnLabel">&#128231; Envoyer le devis</span></button>
-      <button class="btn btn-secondary" onclick="downloadPDF()">⬇ Télécharger le PDF</button>
+      <button class="btn btn-primary" id="sendBtn" onclick="sendEmail()"><span id="sendBtnLabel">&#128231; Envoyer le devis + PDF</span></button>
       <button class="btn btn-secondary" onclick="closeModal()">Fermer</button>
     </div>
   </div>
@@ -641,7 +640,23 @@ function sendEmail(){
   lb.innerHTML='<span class="spinner"></span>Envoi en cours...';sb.style.opacity='0.7';sb.style.pointerEvents='none';
   emailjs.send(EMAILJS_SERVICE_ID,EMAILJS_TEMPLATE_ID,currentData).then(()=>{
     lb.textContent='✓ Envoyé avec succès !';sb.style.background='linear-gradient(135deg,#3daf5c,#6fcb7d)';
-    showToast('✓ Votre devis a bien été envoyé. Réponse sous 24 h.');devisCounter++;
+    showToast('✓ Votre devis a bien été envoyé. Réponse sous 24 h.');
+    devisCounter++;
+    // Téléchargement automatique du PDF après envoi réussi
+    setTimeout(()=>{
+      const doc = generatePDF(currentData);
+      const filename = 'Devis-'+currentData.devis_num+'.pdf';
+      if(isMobile()){
+        const blob = doc.output('blob');
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href=url; a.target='_blank'; a.download=filename;
+        document.body.appendChild(a); a.click();
+        setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); },3000);
+      } else {
+        doc.save(filename);
+      }
+    }, 800);
     setTimeout(()=>{closeModal();lb.innerHTML='&#128231; Envoyer le devis';sb.style.background='';sb.style.opacity='';sb.style.pointerEvents='';},2500);
   }).catch(err=>{console.error(err);lb.innerHTML='&#128231; Envoyer le devis';sb.style.opacity='';sb.style.pointerEvents='';showToast('⚠️ Erreur envoi. Téléchargez le PDF manuellement.',true);});
 }
